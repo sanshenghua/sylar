@@ -158,10 +158,13 @@ std::string HttpRequest::toString() const {
 }
 
 std::ostream& HttpRequest::dump(std::ostream& os) const {
-    //GET /uri HTTP/1.1
-    //Host: wwww.sylar.top
-    //
-    //
+    //GET /uri HTTP/1.1      （请求行）
+    //Host: wwww.sylar.top    （请求头）
+    //User-Agent: Mozilla/5.0
+    //                          （空行）
+    //Username=admin&password=admin  (请求正文)
+
+
     os << HttpMethodToString(m_method) << " "
        << m_path
        << (m_query.empty() ? "" : "?")
@@ -315,6 +318,22 @@ std::string HttpResponse::toString() const {
     return ss.str();
 }
 
+//响应报文
+    /*
+    HTTP/1.1 200 OK                              (请求行)
+    Date: Sat, 31 Dec 2005 23:59:59 GMT         （请求头部）
+    Content-Type: text/html;charset=ISO-8859-1
+    Content-Length: 122
+                                                  （空行）
+    ＜html＞                                       （body）
+    ＜head＞
+    ＜title＞Wrox Homepage＜/title＞
+    ＜/head＞
+    ＜body＞
+    ＜!-- body goes here --＞
+    ＜/body＞
+    ＜/html＞
+    */
 std::ostream& HttpResponse::dump(std::ostream& os) const {
     os << "HTTP/"
        << ((uint32_t)(m_version >> 4))

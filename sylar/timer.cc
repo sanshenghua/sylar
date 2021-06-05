@@ -111,6 +111,8 @@ static void OnTimer(std::weak_ptr<void> weak_cond, std::function<void()> cb) {
     }
 }
 
+//当条件存在时会触发，使用智能指针作为条件，智能指针有引用计数，当智能指针消失了，就没必要执行
+
 Timer::ptr TimerManager::addConditionTimer(uint64_t ms, std::function<void()> cb
                                     ,std::weak_ptr<void> weak_cond
                                     ,bool recurring) {

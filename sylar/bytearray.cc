@@ -71,7 +71,7 @@ void ByteArray::writeFint16 (int16_t value) {
     if(m_endian != SYLAR_BYTE_ORDER) {
         value = byteswap(value);
     }
-    write(&value, sizeof(value));
+    write(&va，lue, sizeof(value));
 }
 
 void ByteArray::writeFuint16(uint16_t value) {
@@ -254,7 +254,7 @@ uint32_t ByteArray::readUint32() {
     uint32_t result = 0;
     for(int i = 0; i < 32; i += 7) {
         uint8_t b = readFuint8();
-        if(b < 0x80) {
+        if(b < 0x80) {//没有下一字节
             result |= ((uint32_t)b) << i;
             break;
         } else {

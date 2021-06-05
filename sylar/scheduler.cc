@@ -7,8 +7,8 @@ namespace sylar {
 
 static sylar::Logger::ptr g_logger = SYLAR_LOG_NAME("system");
 
-static thread_local Scheduler* t_scheduler = nullptr;
-static thread_local Fiber* t_scheduler_fiber = nullptr;
+static thread_local Scheduler* t_scheduler = nullptr;//当前调度器,共用一个
+static thread_local Fiber* t_scheduler_fiber = nullptr;//当前被调度的协程
 
 Scheduler::Scheduler(size_t threads, bool use_caller, const std::string& name)
     :m_name(name) {
@@ -138,7 +138,7 @@ void Scheduler::run() {
     set_hook_enable(true);
     setThis();
     if(sylar::GetThreadId() != m_rootThread) {
-        t_scheduler_fiber = Fiber::GetThis().get();
+        t_scheduler_fiber = Fiber::GetThis().get();//每个线程进来都会生成一个主协程
     }
 
     Fiber::ptr idle_fiber(new Fiber(std::bind(&Scheduler::idle, this)));
@@ -175,7 +175,7 @@ void Scheduler::run() {
         }
 
         if(tickle_me) {
-            tickle();
+            tickle();//有任务
         }
 
         if(ft.fiber && (ft.fiber->getState() != Fiber::TERM
@@ -192,15 +192,15 @@ void Scheduler::run() {
             ft.reset();
         } else if(ft.cb) {
             if(cb_fiber) {
-                cb_fiber->reset(ft.cb);
+                cb_fiber->reset(ft.cb);//可以复用，自己声明的reset
             } else {
-                cb_fiber.reset(new Fiber(ft.cb));
+                cb_fiber.reset(new Fiber(ft.cb));//这里会生成一个
             }
             ft.reset();
-            cb_fiber->swapIn();
+            cb_fiber->swapIn();//执行完会swapOut回来
             --m_activeThreadCount;
             if(cb_fiber->getState() == Fiber::READY) {
-                schedule(cb_fiber);
+                schedule(cb_fiber);//这个线程中new的协程会被放入，可以被任一个线程拿到。
                 cb_fiber.reset();
             } else if(cb_fiber->getState() == Fiber::EXCEPT
                     || cb_fiber->getState() == Fiber::TERM) {
@@ -220,7 +220,7 @@ void Scheduler::run() {
             }
 
             ++m_idleThreadCount;
-            idle_fiber->swapIn();
+            idle_fiber->swapIn();//进去会将状态设置为exec
             --m_idleThreadCount;
             if(idle_fiber->getState() != Fiber::TERM
                     && idle_fiber->getState() != Fiber::EXCEPT) {
@@ -240,7 +240,7 @@ bool Scheduler::stopping() {
         && m_fibers.empty() && m_activeThreadCount == 0;
 }
 
-void Scheduler::idle() {
+void Scheduler::idle() {//停止的话直接结束线程了
     SYLAR_LOG_INFO(g_logger) << "idle";
     while(!stopping()) {
         sylar::Fiber::YieldToHold();

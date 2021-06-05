@@ -115,7 +115,7 @@ bool Socket::setOption(int level, int option, const void* result, socklen_t len)
     return true;
 }
 
-Socket::ptr Socket::accept() {
+Socket::ptr Socket::accept() {//hui
     Socket::ptr sock(new Socket(m_family, m_type, m_protocol));
     int newsock = ::accept(m_sock, nullptr, nullptr);
     if(newsock == -1) {
